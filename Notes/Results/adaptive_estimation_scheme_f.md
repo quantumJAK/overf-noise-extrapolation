@@ -44,3 +44,17 @@ Finally the best set of parameters is $N_{\text{shots}} = 5$ and $c = 7.5$:
 ### Plot of $c$ and $N_{\text{shots}}$ dependence
 
 ![alt text](image-6.png)
+
+
+#### Comparision to flat prior
+
+![alt text](image-7.png)
+
+For flat prior the trade-off is not visible. This is because for small $N$ we just draw a random frequency from flat prior
+
+![alt text](image-8.png)
+
+
+Also arguably the best set is not as best as the adaptive-prior one
+
+![alt text](image-9.png)
