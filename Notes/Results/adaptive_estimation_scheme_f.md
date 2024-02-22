@@ -6,9 +6,9 @@ Here we characterize the performance of the adaptive estimation scheme for the f
 
 ### Fixed   
 - Amplitude of charge fluctuations $S_1 
-\sim  1\mu $eV$^2$/Hz 
- Average frequency $\omega_0 = 50$MHz
-- Charge to spin conversion factor $2 \times 10^{-4}$, that maps to $\sigma_\omega = 0.2$MHz 
+\sim  1\mu $eV$^2$ /Hz 
+ Average frequency $\omega_0 = 50$ MHz
+- Charge to spin conversion factor $2 \times 10^{-4}$ , that maps to $\sigma_\omega = 0.2$ MHz 
 - Tracking time $T = 5$ms - how long we track the frequency
 - Number of telegraphs $N = 20$
 
@@ -21,21 +21,26 @@ Here we characterize the performance of the adaptive estimation scheme for the f
 #### Trajectories:
 
 For $N=1$ we can estimate moving average, but we need small c
+
 ![alt text](image.png)
 
 
 For $N=2$ too large c gives too soft adaptive scheme
+
 ![alt text](image-1.png)
 ![alt text](image-2.png)
 
 
 For large number of shots $N=10$ the estimation takes longer so we have huge jumps in trajectories. Also if adaptive scheme is agressive (low $c$) is large probability of outliers:
+
 ![alt text](image-4.png)
 ![alt text](image-3.png)
 
 
 Finally the best set of parameters is $N_{\text{shots}} = 5$ and $c = 7.5$:
+
 ![alt text](image-5.png)
 
 ### Plot of $c$ and $N_{\text{shots}}$ dependence
+
 ![alt text](image-6.png)
