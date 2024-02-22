@@ -246,7 +246,7 @@ class Over_f_noise(NoiseProcess):
        
         
     def get_sigma(self):
-        return self.sigma
+        return 2*self.sigma
     
     def get_tc(self):
         return 1e-1
