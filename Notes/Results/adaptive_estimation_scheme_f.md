@@ -15,7 +15,7 @@ Here we characterize the performance of the adaptive estimation scheme for the f
 
 ### Variable:
 - Number of shots $N_{\text{shots}} = 1-10$ - number of shots to average over
-- Coefficient $c = \tau_{n+1}/\sigma_n =  8$
+- Coefficient $c = \tau_{n+1}/\sigma_n$
 
 
 #### Trajectories:
