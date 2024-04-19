@@ -34,7 +34,7 @@ class OrnsteinUhlenbeck(NoiseProcess):
     sigma: float
     tc: float
 
-    def __init__(self, sigma, tc, x0=None):
+    def __init__(self, sigma, gamma, x0=None):
         """
         Constructor of the class
         Parameters
@@ -47,7 +47,7 @@ class OrnsteinUhlenbeck(NoiseProcess):
             initial value of the noise (If none it is generated randomly)
         """
         self.sigma = sigma
-        self.tc = tc
+        self.tc = 1/gamma
         self.set_initial_value(x0)
 
     def set_sigma_tc(self, sigma, tc):
@@ -220,7 +220,7 @@ class Telegraph_Noise(NoiseProcess):
 
     def update(self, dt):
         # update telegraph noise
-        switch_probability = 1/2 - 1/2*np.exp(-2*self.gamma*dt) 
+        switch_probability = 1/2 - 1/2*np.exp(-self.gamma*dt) 
 
         if np.random.uniform(0,1) < switch_probability:
             self.x = -self.x    
@@ -232,17 +232,19 @@ class Telegraph_Noise(NoiseProcess):
     
 
 class Over_f_noise(NoiseProcess):
-    def __init__(self, n_telegraphs, S1 ,couplings_dispersion, ommax, ommin, om0=0, state = None):
-        self.n_telegraphs = n_telegraphs
+    def __init__(self, n_fluctuators, S1 ,couplings_dispersion, ommax, ommin, om0=0, state = None, 
+                 fluctuator_class = OrnsteinUhlenbeck):
+        self.n_fluctuators = n_fluctuators
         self.S1 = S1
         self.state = state
         self.couplings_dispersion = couplings_dispersion
         self.ommax = ommax
         self.ommin = ommin
+        self.fluctuator_class = fluctuator_class
         self.sigma = S1*np.sqrt(np.log(ommax/ommin)*2)
-        self.spawn_telegraphs(n_telegraphs, couplings_dispersion, state)
+        self.spawn_fluctuators(n_fluctuators, couplings_dispersion, state)
         self.om0 = om0
-        self.x = om0 + np.sum([telegraph.x for telegraph in self.telegraphs])
+        self.x = om0 + np.sum([telegraph.x for telegraph in self.fluctuators])
        
         
     def get_sigma(self):
@@ -252,36 +254,31 @@ class Over_f_noise(NoiseProcess):
         return 1e-1
     
 
-    def spawn_telegraphs(self, n_telegraphs, couplings_dispersion, state):
-        if state is None:
-            state = np.random.choice([-1,1], size = n_telegraphs)
+    def spawn_fluctuators(self, n_fluctuators, couplings_dispersion, state):
+  
         
-        
-        uni = np.random.uniform(0,1,size = n_telegraphs)
+        uni = np.random.uniform(0,1,size = n_fluctuators)
         gammas = self.ommax*np.exp(-np.log(self.ommax/self.ommin)*uni)
         
-        sigmas_avg = self.S1 / np.sqrt(self.n_telegraphs / 2 / np.log(self.ommax / self.ommin))
-        sigmas = sigmas_avg*np.random.normal(1,couplings_dispersion, size = n_telegraphs)
-        self.telegraphs = []
+        sigmas_avg = self.S1 / np.sqrt(self.n_fluctuators / 2 / np.log(self.ommax / self.ommin))
+        sigmas = sigmas_avg*np.random.normal(1,couplings_dispersion, size = n_fluctuators)
+        self.fluctuators = []
 
         for n, gamma in enumerate(gammas):
-            self.telegraphs.append(Telegraph_Noise
-                                   (sigmas[n], gamma, state0 = state[n]))
+            self.fluctuators.append(self.fluctuator_class 
+                                   (sigmas[n], gamma))
         
     def update(self, dt):
         x = 0
-        for telegraph in self.telegraphs:
-            x += telegraph.update(dt)
+        for fluctuator in self.fluctuators:
+            x += fluctuator.update(dt)
         self.x = x + self.om0
         return self.x
     
-
-        
     def reset(self):
-        for n,telegraph in enumerate(self.telegraphs):
-            telegraph.set_state(self.state[n])
-        self.x = self.om0 + np.sum([telegraph.x for telegraph in self.telegraphs])
+        for n,fluctuator in enumerate(self.fluctuators):
+            fluctuator.set_state(self.state[n])
+        self.x = self.om0 + np.sum([fluctuator.x for fluctuator in self.fluctuators])
     
  
-
 
