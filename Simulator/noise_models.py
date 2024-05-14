@@ -2,6 +2,28 @@ import numpy as np
 import scipy as sp
 import scipy.interpolate
 from typing import Union, List
+from scipy.optimize import curve_fit
+
+def get_spectrum(signal, time_step , total_time):
+    '''
+    This function calculates the spectrum of a signal.
+    ----------------
+    Parameters:
+    signal: the signal
+    time_step: time step
+    total_time: total time of the signal
+    ----------------
+    Returns:
+    f: the frequencies
+    Sxx: the spectrum
+    '''
+    N = len(signal)
+    f = np.fft.fftfreq(N, time_step)
+    xf = np.fft.fft(signal)
+    Sxx = 2*time_step**2/total_time*(xf*np.conj(xf))
+    Sxx = Sxx.real
+    Sxx = Sxx[:int(N/2)]
+    return f[:int(N/2)], Sxx
 
 
 class NoiseProcess:
@@ -203,11 +225,6 @@ class Ornstein_plus_fast(OrnsteinUhlenbeck):
         self.T2 = T2
         self.sig_fast = 1/T2*1e3
 
-    def update(self, dt):
-        return super().update(dt) + self.sig_fast * np.random.normal()
-        
-
-class Telegraph_Noise(NoiseProcess):
     def __init__(self, sigma, gamma, x0=0, state0 = None):
         self.gamma = gamma
         self.sigma = sigma
@@ -245,7 +262,45 @@ class Over_f_noise(NoiseProcess):
         self.spawn_fluctuators(n_fluctuators, couplings_dispersion, state)
         self.om0 = om0
         self.x = om0 + np.sum([telegraph.x for telegraph in self.fluctuators])
-       
+
+    def get_abc(self, shot_time):
+        import matplotlib.pyplot as plt
+        y = []
+        for i in range(5000):
+           y.append(self.update(shot_time))
+        y = np.array(y)
+        fig, ax = plt.subplots(1,3,figsize = (16,4))
+        ax[0].plot(y)
+        ax[0].set_title("Trajectory")
+        stds = []
+        for k in range(100):
+                k = k+1
+                stds.append(np.mean((y[k:]-y[:-k])**2))
+
+        def func(x, a, b,c):
+            return a*np.log(b*x)+c
+        x = np.arange(1, 101)
+        print("dupa")
+
+        
+        popt, pcov = curve_fit(func, x, stds)
+        self.abc = popt
+
+        ax[1].set_title(r"$\sigma^2$(t)")
+
+        ax[1].plot(x, stds)
+        ax[1].plot(x, func(x, *popt))
+        
+
+        
+        f, sx = get_spectrum(y, shot_time, 5000)
+        ax[2].plot(f,sx/sx[-1])
+        ax[2].set_title("Spectrum")
+        ax[2].plot(f,(1/f)*f[-1])
+        ax[2].set_xscale("log")
+        ax[2].set_yscale("log")
+        plt.show()
+
         
     def get_sigma(self):
         return 2*self.sigma
@@ -279,6 +334,10 @@ class Over_f_noise(NoiseProcess):
         for n,fluctuator in enumerate(self.fluctuators):
             fluctuator.set_state(self.state[n])
         self.x = self.om0 + np.sum([fluctuator.x for fluctuator in self.fluctuators])
-    
- 
 
+    def gen_trajectory(self, times):
+        trajectory = [self.x]
+        for k,time in enumerate(times[:-1]):
+            trajectory.append(self.update(times[k+1]-times[k]))
+        return trajectory
+    
